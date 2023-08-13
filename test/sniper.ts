@@ -285,7 +285,7 @@ describe("UniversalSniper", function () {
             await expect(parsed[0]).to.eq(await computeVaultAddress(sniper, ethers.constants.AddressZero, 0));
         })
 
-        it("should compute swap price", async () => {
+        it("should compute V2 swap price", async () => {
             // The factories.
             const factories = [
                 "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f", // Uniswap V2
