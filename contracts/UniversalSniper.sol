@@ -9,6 +9,9 @@ contract UniversalSniper is Dispatcher {
     /// @dev Invalid `execute` call inputs.
     error LengthMismatch();
 
+    /// @dev The sniper contract version.
+    uint8 public constant version = 6;
+
     /// @dev Immutable owner.
     address public immutable owner;
     constructor() {
@@ -28,6 +31,21 @@ contract UniversalSniper is Dispatcher {
         // Dispatch the commands.
         for (uint256 i = 0; i < commandCount; i++)
             dispatch(commands[i], inputs[i]);
+    }
+
+    /// @dev Parses the readonly commands and returns the response.
+    function readView(bytes1[] calldata readonlyCommands, bytes[] calldata inputs) external view returns (bytes[] memory results) {
+        // Check input lengths.
+        uint256 commandCount = readonlyCommands.length;
+        if (commandCount != inputs.length)
+            revert LengthMismatch();
+
+        // Dispatch the commands.
+        results = new bytes[](commandCount);
+        for (uint256 i = 0; i < commandCount; i++)
+            results[i] = dispatchView(readonlyCommands[i], inputs[i]);
+
+        return results;
     }
 
     /// @dev Fallback function to receive ether.

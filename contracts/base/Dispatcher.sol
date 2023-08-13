@@ -1,18 +1,33 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.17;
 
-import { Commands } from "../libraries/Commands.sol";
-import { Vaults } from "../libraries/Vaults.sol";
+import { Commands, ViewCommands } from "../libraries/Commands.sol";
+import { Vaults } from "../helpers/Vaults.sol";
 
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/interfaces/IERC20.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { UniswapV2Library } from "../libraries/UniswapV2Library.sol";
+import { BytesLib } from "../libraries/BytesLib.sol";
+import { V2Router } from "../helpers/V2Router.sol";
+import { V3Router } from "../helpers/V3Router.sol";
+import { IWETH9 } from "../interfaces/IWETH9.sol";
+
+import "hardhat/console.sol";
+import "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import "../libraries/V3Path.sol";
 
 /// @dev Decodes and executes commands.
 abstract contract Dispatcher {
     using SafeERC20 for IERC20;
+    using BytesLib for bytes;
+    using V3Path for bytes;
+    using SafeCast for uint256;
 
     /// @dev Unsupported command.
     error InvalidCommand(bytes1 command);
+    /// @dev Insufficient ether.
+    error InsufficientIn(uint256 amountIn);
 
     /// @dev Decodes and executes the given command with given inputs.
     function dispatch(bytes1 command, bytes calldata inputs) internal  {
@@ -22,11 +37,34 @@ abstract contract Dispatcher {
             _bribeCoinbase(inputs);
         } else if (command == Commands.TRANSFER_FROM_VAULT) {
             _transferFromVault(inputs);
+        } else if (command == Commands.BUY_V2) {
+            _buyV2(inputs);
+        } else if (command == Commands.SELL_V2) {
+            _sellV2(inputs);
+        } else if (command == Commands.BUY_V3) {
+            _buyV3(inputs);
         } else {
             // Invalid command.
             revert InvalidCommand(command);
         }
     }
+
+    /// @dev Decodes and returns the given command's result.
+    function dispatchView(bytes1 command, bytes calldata inputs) internal view returns (bytes memory)  {
+        // Compute vault address.
+        if (command == ViewCommands.COMPUTE_VAULT_ADDRESS) {
+            return _getVaultAddr(inputs);
+        } else if (command == ViewCommands.ASSET_V2_PRICE) {
+            return _getAssetPriceV2(inputs);
+        }
+
+        // Unknown command.
+        return abi.encodePacked(address(0));
+    }
+
+    ///
+    /// @dev External Functions
+    ///
 
     /// @dev Creates a new vault.
     function _createVault(bytes calldata inputs) internal  {
@@ -59,5 +97,177 @@ abstract contract Dispatcher {
             recipient := calldataload(add(inputs.offset, 0x40))
         }
         IERC20(token).transferFrom(vault, recipient, IERC20(token).balanceOf(vault));
+    }
+
+    /// @dev Buys tokens with V2 pairs.
+    function _buyV2(bytes calldata inputs) internal  {
+        uint256 amountIn;
+        uint256 maxAmountsOut;
+        assembly {
+            amountIn := calldataload(inputs.offset)
+            maxAmountsOut := calldataload(add(inputs.offset, 0x20))
+        }
+        address[] calldata vaults = inputs.toAddressArray(2);
+        address[] calldata path = inputs.toAddressArray(3);
+        address[] calldata factories = inputs.toAddressArray(4);
+        bytes[] calldata initCodes = inputs.toBytesArray(5);
+
+        // Check amount.
+        if (amountIn > msg.value)
+            revert InsufficientIn(amountIn);
+
+        // Amount in each.
+        uint256 limitedIn;
+        uint256 amountInEach = amountIn / vaults.length;
+        uint256 dust = amountIn;
+
+        // Wrap ethers.
+        IWETH9(path[0]).deposit{value: amountIn}();
+
+        // Iterate over vaults.
+        V2Router.V2Pair[] memory pairs;
+        for (uint256 i = 0; i < vaults.length; i++) {
+            // Get the best pairs.
+            pairs = V2Router.findBestPairs(path, factories, initCodes);
+
+            // Limit the output.
+            limitedIn = V2Router.limitOutput(amountInEach, maxAmountsOut, path, pairs);
+
+            // Transfer funds to first pair.
+            IERC20(path[0]).transfer(pairs[0].addr, limitedIn);
+
+            // Swap.
+            V2Router.v2Swap(vaults[i], path, pairs);
+            dust -= limitedIn;
+        }
+
+        // 1 Gwei threshold.
+        // Unwrap & refund dust.
+        if (dust > 1e9) {
+            IWETH9(path[0]).withdraw(dust);
+            payable(msg.sender).transfer(dust);
+        }
+    }
+
+    /// @dev Sells tokens with V2 pairs.
+    function _sellV2(bytes calldata inputs) internal  {
+        uint256 sellPercentage;
+        assembly {
+            sellPercentage := calldataload(inputs.offset)
+        }
+        address[] calldata vaults = inputs.toAddressArray(1);
+        address[] calldata path = inputs.toAddressArray(2);
+        address[] calldata factories = inputs.toAddressArray(3);
+        bytes[] calldata initCodes = inputs.toBytesArray(4);
+
+        // Iterate over vaults.
+        uint256 limitedIn;
+        V2Router.V2Pair[] memory pairs;
+        for (uint256 i = 0; i < vaults.length; i++) {
+            // Get the best pairs.
+            pairs = V2Router.findBestPairs(path, factories, initCodes);
+
+            // Calculate balances.
+            limitedIn = IERC20(path[0]).balanceOf(vaults[i]) * sellPercentage / 100;
+
+            // Transfer funds to first pair.
+            IERC20(path[0]).transferFrom(vaults[i], pairs[0].addr, limitedIn);
+
+            // Swap.
+            V2Router.v2Swap(address(this), path, pairs);
+        }
+
+        // Return amounts out.
+        address weth = path[path.length-1];
+        uint256 dust = IERC20(weth).balanceOf(address(this));
+        IWETH9(weth).withdraw(dust);
+        payable(msg.sender).transfer(dust);
+    }
+
+    /// @dev Buys tokens with V3 pairs.
+    function _buyV3(bytes calldata inputs) internal {
+        /*
+        uint256 amountIn;
+        uint256 maxAmountsOut;
+        address quoter;
+        address factory;
+        assembly {
+            amountIn := calldataload(inputs.offset)
+            maxAmountsOut := calldataload(add(inputs.offset, 0x20))
+            quoter := calldataload(add(inputs.offset, 0x40))
+            factory := calldataload(add(inputs.offset, 0x60))
+        }
+        address[] calldata vaults = inputs.toAddressArray(4);
+        bytes calldata path = inputs.toBytesArray(5);
+        bytes calldata initCode = inputs.toBytes(6);
+
+        // Check amount.
+        if (amountIn > msg.value)
+            revert InsufficientIn(amountIn);
+
+        // Amount in each.
+        uint256 limitedIn;
+        uint256 amountInEach = amountIn / vaults.length;
+        uint256 dust = amountIn;
+
+        // Wrap ethers.
+        (address weth,,) = path.decodeFirstPool();
+        IWETH9(weth).deposit{value: amountIn}();
+
+        // Iterate over vaults.
+        for (uint256 i = 0; i < vaults.length; i++) {
+            // Limit the output.
+            limitedIn = V3Router.limitOutput(amountInEach, maxAmountsOut, quoter, path);
+
+            // Swap with the pool with most liquidity.
+            V3Router.v3Multiswap(limitedIn, )
+
+            // Swap.
+            // V2Router.v2Swap(vaults[i], path, pairs);
+            dust -= limitedIn;
+        }
+
+        // 1 Gwei threshold.
+        // Unwrap & refund dust.
+        if (dust > 1e9) {
+            IWETH9(path[0]).withdraw(dust);
+            payable(msg.sender).transfer(dust);
+        }
+        */
+    }
+
+    ///
+    /// @dev View Functions
+    ///
+
+    /// @dev Computes vault address.
+    function _getVaultAddr(bytes calldata inputs) internal view returns (bytes memory) {
+        address token;
+        uint256 id;
+        assembly {
+            token := calldataload(inputs.offset)
+            id := calldataload(add(inputs.offset, 0x20))
+        }
+        return abi.encode(Vaults.getVaultAddress(token, id));
+    }
+
+    /// @dev Calculates asset price with V2 pairs. (A/path/B) (A per B)
+    function _getAssetPriceV2(bytes calldata inputs) internal view returns (bytes memory) {
+        address[] calldata path = inputs.toAddressArray(0);
+        address[] calldata factories = inputs.toAddressArray(1);
+        bytes[] calldata initCodes = inputs.toBytesArray(2);
+
+        // Find best pairs.
+        V2Router.V2Pair[] memory pairs = V2Router.findBestPairs(path, factories, initCodes);
+
+        // Calculate amount in.
+        uint256 amountB = 10 ** ERC20(path[path.length-1]).decimals();
+        uint256 amountA = V2Router.getAmountInMultihop(
+            amountB,
+            path,
+            pairs
+        );
+
+        return abi.encode(amountA, amountB);
     }
 }
