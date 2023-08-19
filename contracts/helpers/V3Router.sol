@@ -7,10 +7,11 @@ import {IUniswapV3Pool} from '@uniswap/v3-core/contracts/interfaces/IUniswapV3Po
 
 import "../libraries/V3Path.sol";
 import "hardhat/console.sol";
+import "./V3Router.sol";
 
 library V3Router {
     /// @dev No pair found.
-    error PairNotFound(address tokenA, address tokenB);
+    error PoolNotFound(address tokenA, address tokenB);
 
     using V3Path for bytes;
 
@@ -28,6 +29,18 @@ library V3Router {
         uint24 fee;
     }
 
+    /// @dev Generates Uniswap V3 path from pools.
+    function generatePath(V3Pool[] memory pools) internal pure returns (bytes memory path) {
+        path = abi.encodePacked(bytes20(pools[0].tokenA));
+        for (uint i = 0; i < pools.length; i++) {
+            path = bytes.concat(
+                path,
+                bytes3(pools[i].fee),
+                bytes20(pools[i].tokenB)
+            );
+        }
+    }
+
     /// @dev Checks if address is a contract.
     function isContract(address _addr) internal view returns (bool) {
         uint32 size;
@@ -42,9 +55,12 @@ library V3Router {
         uint256 amountIn,
         uint256 maxAmountOut,
         address quoter,
-        bytes calldata path
+        V3Pool[] memory pools
     ) internal returns (uint256 normalizedIn) {
         if (maxAmountOut == 0) return amountIn;
+
+        // Generate path.
+        bytes memory path = generatePath(pools);
 
         // get amounts in for max amounts.
         uint256 maxInput = IQuoter(quoter).quoteExactInput(path, maxAmountOut);
@@ -81,12 +97,26 @@ library V3Router {
 
         // If maxLiquidity is still 0, no pool found
         if (maxLiquidity == 0) {
-            revert PairNotFound(tokenA, tokenB);
+            revert PoolNotFound(tokenA, tokenB);
         }
 
         return V3Pool(pool, tokenA, tokenB, fee);
     }
 
+    // @dev Finds the V3 pools from path.
+    function findPoolsBulk(
+        address factory,
+        address[] calldata path,
+        bytes calldata initCode
+    ) internal view returns (V3Pool[] memory pairs)  {
+        pairs = new V3Pool[](path.length-1);
+        for (uint i = 0; i < pairs.length; i++) {
+            address tokenA = path[i];
+            address tokenB = path[i+1];
+            pairs[i] = findPools(factory, tokenA, tokenB, initCode);
+        }
+    }
+    
     /// @dev Computes the V3 pool address.
     function computePoolAddress(
         address factory,

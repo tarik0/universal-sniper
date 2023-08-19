@@ -186,7 +186,6 @@ abstract contract Dispatcher {
 
     /// @dev Buys tokens with V3 pairs.
     function _buyV3(bytes calldata inputs) internal {
-        /*
         uint256 amountIn;
         uint256 maxAmountsOut;
         address quoter;
@@ -198,32 +197,30 @@ abstract contract Dispatcher {
             factory := calldataload(add(inputs.offset, 0x60))
         }
         address[] calldata vaults = inputs.toAddressArray(4);
-        bytes calldata path = inputs.toBytesArray(5);
+        address[] calldata path = inputs.toAddressArray(5);
         bytes calldata initCode = inputs.toBytes(6);
 
         // Check amount.
         if (amountIn > msg.value)
             revert InsufficientIn(amountIn);
 
+        // Wrap ethers.
+        IWETH9(path[0]).deposit{value: amountIn}();
+
         // Amount in each.
         uint256 limitedIn;
         uint256 amountInEach = amountIn / vaults.length;
         uint256 dust = amountIn;
 
-        // Wrap ethers.
-        (address weth,,) = path.decodeFirstPool();
-        IWETH9(weth).deposit{value: amountIn}();
-
         // Iterate over vaults.
+        V3Router.V3Pool[] memory pools = V3Router.findPoolsBulk(factory, path, initCode);
         for (uint256 i = 0; i < vaults.length; i++) {
             // Limit the output.
-            limitedIn = V3Router.limitOutput(amountInEach, maxAmountsOut, quoter, path);
+            limitedIn = V3Router.limitOutput(amountInEach, maxAmountsOut, quoter, pools);
 
-            // Swap with the pool with most liquidity.
-            V3Router.v3Multiswap(limitedIn, )
+            // TODO: Swap with the pool with most liquidity.
+            // V3Router.v3Multiswap(limitedIn, )
 
-            // Swap.
-            // V2Router.v2Swap(vaults[i], path, pairs);
             dust -= limitedIn;
         }
 
@@ -233,7 +230,6 @@ abstract contract Dispatcher {
             IWETH9(path[0]).withdraw(dust);
             payable(msg.sender).transfer(dust);
         }
-        */
     }
 
     ///
