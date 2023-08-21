@@ -12,10 +12,10 @@ import { BytesLib } from "../libraries/BytesLib.sol";
 import { V2Router } from "../helpers/V2Router.sol";
 import { V3Router } from "../helpers/V3Router.sol";
 import { IWETH9 } from "../interfaces/IWETH9.sol";
+import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import { V3Path } from "../libraries/V3Path.sol";
 
 import "hardhat/console.sol";
-import "@openzeppelin/contracts/utils/math/SafeCast.sol";
-import "../libraries/V3Path.sol";
 
 /// @dev Decodes and executes commands.
 abstract contract Dispatcher {
@@ -28,6 +28,8 @@ abstract contract Dispatcher {
     error InvalidCommand(bytes1 command);
     /// @dev Insufficient ether.
     error InsufficientIn(uint256 amountIn);
+    /// @dev Invalid swap.
+    error InvalidSwap();
 
     /// @dev Decodes and executes the given command with given inputs.
     function dispatch(bytes1 command, bytes calldata inputs) internal  {
@@ -63,7 +65,7 @@ abstract contract Dispatcher {
     }
 
     ///
-    /// @dev External Functions
+    /// @dev Internal Functions
     ///
 
     /// @dev Creates a new vault.
@@ -184,6 +186,15 @@ abstract contract Dispatcher {
         payable(msg.sender).transfer(dust);
     }
 
+    /// @dev Pays tokens to the recipient.
+    function _pay(address payer, address recipient, IERC20 tokenIn, uint256 amount) internal  {
+        if (payer == address(this)) {
+            SafeERC20.safeTransfer(tokenIn, recipient, amount);
+        } else {
+            SafeERC20.safeTransferFrom(tokenIn, payer, recipient, amount);
+        }
+    }
+
     /// @dev Buys tokens with V3 pairs.
     function _buyV3(bytes calldata inputs) internal {
         uint256 amountIn;
@@ -218,9 +229,8 @@ abstract contract Dispatcher {
             // Limit the output.
             limitedIn = V3Router.limitOutput(amountInEach, maxAmountsOut, quoter, pools);
 
-            // TODO: Swap with the pool with most liquidity.
-            // V3Router.v3Multiswap(limitedIn, )
-
+            // Swap with the pools
+            V3Router.v3Swap(limitedIn, vaults[i], pools, path);
             dust -= limitedIn;
         }
 
@@ -265,5 +275,47 @@ abstract contract Dispatcher {
         );
 
         return abi.encode(amountA, amountB);
+    }
+
+
+    ///
+    /// @dev Uniswap Callbacks
+    ///
+
+    /// @dev Uniswap v3 Callback.
+    function uniswapV3SwapCallback(
+        int256 amount0Delta,
+        int256 amount1Delta,
+        bytes calldata _data
+    ) external {
+        // Swaps entirely within 0-liquidity regions are not supported
+        if (amount0Delta <= 0 && amount1Delta <= 0)
+            revert InvalidSwap();
+
+        // Decode the data.
+        (
+            address payer,
+            address tokenIn,
+            V3Router.V3Pool memory pool
+        ) = abi.decode(_data, (address, address, V3Router.V3Pool));
+
+        // Verify the callback.
+        if (
+            address(0) == tokenIn ||
+            pool.addr != msg.sender
+        ) revert InvalidSwap();
+
+        // Calculate amounts to pay.
+        address tokenOut = pool.tokenA == tokenIn ? pool.tokenB : pool.tokenA;
+        (bool isExactInput, uint256 amountToPay) =
+            amount0Delta > 0 ? (tokenIn < tokenOut, uint256(amount0Delta)) : (tokenOut < tokenIn, uint256(amount1Delta));
+
+        if (isExactInput) {
+            // Pay the pool (msg.sender)
+            _pay(payer, msg.sender, IERC20(tokenIn), amountToPay);
+        } else {
+            // exact output not supported.
+            revert InvalidSwap();
+        }
     }
 }

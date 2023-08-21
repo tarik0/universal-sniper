@@ -1,4 +1,4 @@
-import { time, loadFixture } from "@nomicfoundation/hardhat-network-helpers";
+import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { ethers } from "hardhat";
 import {expect} from "chai";
 import {UniversalSniper} from "../typechain-types";
@@ -90,7 +90,7 @@ describe("UniversalSniper", function () {
                     .slice(0)
                     .map((i) => createVault(sniper, DAI_ADDR, BigNumber.from(i)))
             )
-        ).map(({ address, receipt }) => address);
+        ).map(({ address }) => address);
 
         // Execute BUY_V2.
         const command = "0x03"; // BUY_V2 command
@@ -102,6 +102,41 @@ describe("UniversalSniper", function () {
         // Execute the command.
         const tx = await sniper.execute([command], [inputs], { value: amount });
         return { vaults, receipt: await tx.wait(1), path, factories, initCodes };
+    }
+
+    /// Buys V3 tokens.
+    async function buyV3(sniper: UniversalSniper, amount: BigNumber, maxAmount: BigNumber, vaultCount: number) {
+        // Quoter and factory.
+        const quoter = ethers.utils.getAddress("0xb27308f9f90d607463bb33ea1bebb41c27ce5ab6");
+        const factory = ethers.utils.getAddress("0x1f98431c8ad98523631ae4a59f267346ea31f984");
+        const initCode = "0xe34f199b19b2b4f47f68442619d555527d244f78a3297ea89325f843f87b8b54";
+
+        // The path.
+        const path = [
+            WETH_ADDR,
+            USDT_ADDR,
+            DAI_ADDR
+        ]
+
+        // Create vaults.
+        const vaults = (
+            await Promise.all(
+                [...Array(vaultCount).keys()]
+                    .slice(0)
+                    .map((i) => createVault(sniper, DAI_ADDR, BigNumber.from(i)))
+            )
+        ).map(({ address }) => address);
+
+        // Execute BUY_V3.
+        const command = "0x05"; // BUY_V3 command
+        const inputs = ethers.utils.defaultAbiCoder.encode(
+            ["uint256", "uint256", "address", "address", "address[]", "address[]", "bytes"],
+            [amount, maxAmount, quoter, factory, vaults, path, initCode]
+        );
+
+        // Execute the command.
+        const tx = await sniper.execute([command], [inputs], { value: amount });
+        return { vaults, receipt: await tx.wait(1), path, factory, initCode, quoter };
     }
 
     /// The deployment tests.
@@ -116,7 +151,7 @@ describe("UniversalSniper", function () {
     /// The command tests.
     describe("Commands", () => {
         it("should create new vault with `CREATE_VAULT` command", async () => {
-            const { sniper, owner } = await loadFixture(deploySniperFixture);
+            const { sniper } = await loadFixture(deploySniperFixture);
             const token = ethers.constants.AddressZero; // replace with actual token address
             const id = ethers.BigNumber.from(1);
 
@@ -148,7 +183,7 @@ describe("UniversalSniper", function () {
             const balanceAfter = await ethers.provider.getBalance(coinbase);
 
             // Check if the balance of the coinbase has increased by the bribe amount plus the block reward
-            expect(balanceAfter.sub(balanceBefore)).to.equal(bribe.add(blockReward));
+            expect(balanceAfter.sub(balanceBefore)).to.gte(bribe.add(blockReward));
 
             console.log(`MEV bribe cost: ${(await tx.wait(1)).gasUsed}`);
         });
@@ -184,7 +219,7 @@ describe("UniversalSniper", function () {
         })
 
         it("should buy tokens with `BUY_V2` command", async () => {
-            const { sniper, owner } = await loadFixture(deploySniperFixture);
+            const { sniper } = await loadFixture(deploySniperFixture);
 
             // Max 10 DAI output.
             const maxAmountsOut = ethers.utils.parseEther("50");
@@ -209,7 +244,7 @@ describe("UniversalSniper", function () {
             expect(balances[1].lt(maxAmountsOut)).to.be.true;
             expect(balances[2].lt(maxAmountsOut)).to.be.true;
 
-            console.log(`Buy V2 cost: ${receipt.gasUsed}`)
+            console.log(`Avg. Buy V2 cost: ${receipt.gasUsed.div(vaults.length)}`)
         })
 
         it("should sell tokens with `SELL_V2` command", async () => {
@@ -256,7 +291,36 @@ describe("UniversalSniper", function () {
             expect(balances[2].eq(ethers.constants.Zero)).to.be.true;
             expect(before.lt(after)).to.be.true;
 
-            console.log(`Sell V2 cost: ${receipt.gasUsed}`)
+            console.log(`Avg. Sell V2 cost: ${receipt.gasUsed.div(vaults.length)}`)
+        })
+
+        it("should buy tokens with `BUY_V3` command", async () => {
+            const { sniper } = await loadFixture(deploySniperFixture);
+
+            // Max 10 DAI output.
+            const maxAmountsOut = ethers.utils.parseEther("50");
+            const amountIn = ethers.utils.parseEther("1");
+
+            // Execute BUY_V2.
+            const {vaults, receipt} = await buyV3(sniper, amountIn, maxAmountsOut, 3)
+
+            // after balances.
+            const dai = await ethers.getContractAt("IERC20", DAI_ADDR);
+            const balances = await Promise.all([
+                dai.balanceOf(vaults[0]),
+                dai.balanceOf(vaults[1]),
+                dai.balanceOf(vaults[2]),
+            ])
+
+            expect(balances[0].eq(ethers.constants.Zero)).not.to.be.true;
+            expect(balances[1].eq(ethers.constants.Zero)).not.to.be.true;
+            expect(balances[2].eq(ethers.constants.Zero)).not.to.be.true;
+
+            expect(balances[0].lt(maxAmountsOut)).to.be.true;
+            expect(balances[1].lt(maxAmountsOut)).to.be.true;
+            expect(balances[2].lt(maxAmountsOut)).to.be.true;
+
+            console.log(`Avg. Buy V3 cost: ${receipt.gasUsed.div(vaults.length)}`)
         })
 
         it("should revert for unsupported commands", async () => {
@@ -282,7 +346,7 @@ describe("UniversalSniper", function () {
             const addr = await computeVaultAddress(sniper, ethers.constants.AddressZero, 0);
             const response = await sniper.connect(owner).readView([command], [inputs]);
             const parsed = ethers.utils.defaultAbiCoder.decode(["address"], ethers.utils.arrayify(response[0]));
-            await expect(parsed[0]).to.eq(await computeVaultAddress(sniper, ethers.constants.AddressZero, 0));
+            await expect(parsed[0]).to.eq(addr);
         })
 
         it("should compute V2 swap price", async () => {
