@@ -2758,11 +2758,10 @@ library UniswapV2Library {
     /// @param amountOut The desired output amount
     /// @param path The path of the multi-hop trade
     /// @return amount The input amount of the input token
-    /// @return pair The first pair in the trade
     function getAmountInMultihop(address factory, bytes32 initCodeHash, uint256 amountOut, address[] memory path)
     internal
     view
-    returns (uint256 amount, address pair)
+    returns (uint256 amount)
     {
         if (path.length < 2)
             revert InvalidPath();
