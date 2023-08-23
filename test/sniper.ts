@@ -323,6 +323,53 @@ describe("UniversalSniper", function () {
             console.log(`Avg. Buy V3 cost: ${receipt.gasUsed.div(vaults.length)}`)
         })
 
+        it("should sell tokens with `SELL_V3` command", async () => {
+            const { sniper, owner } = await loadFixture(deploySniperFixture);
+
+            const maxAmountsOut = ethers.utils.parseEther("0");
+            const amountIn = ethers.utils.parseEther("1");
+
+            // Execute BUY_V2.
+            const {vaults, path, factory, initCode, quoter}
+                = await buyV3(sniper, amountIn, maxAmountsOut, 3)
+
+            // Reverse path.
+            const sellPath = path.reverse();
+            const sellPercentage = BigNumber.from("100");
+
+            // Execute SELL_V3.
+            const command = "0x06"; // SELL_V3 command
+            const inputs = ethers.utils.defaultAbiCoder.encode(
+                ["uint256", "address", "address", "address[]", "address[]", "bytes"],
+                [sellPercentage, quoter, factory, vaults, sellPath, initCode]
+            );
+
+            // Before balance.
+            const before = await sniper.provider.getBalance(await owner.getAddress());
+
+            // Execute the command.
+            const tx = await sniper.execute([command], [inputs]);
+            const receipt = await tx.wait(1);
+
+            // after balances.
+            const dai = await ethers.getContractAt("IERC20", DAI_ADDR);
+            const balances = await Promise.all([
+                dai.balanceOf(vaults[0]),
+                dai.balanceOf(vaults[1]),
+                dai.balanceOf(vaults[2]),
+            ])
+
+            // after balance.
+            const after = await sniper.provider.getBalance(await owner.getAddress());
+
+            expect(balances[0].eq(ethers.constants.Zero)).to.be.true;
+            expect(balances[1].eq(ethers.constants.Zero)).to.be.true;
+            expect(balances[2].eq(ethers.constants.Zero)).to.be.true;
+            expect(before.lt(after)).to.be.true;
+
+            console.log(`Avg. Sell V3 cost: ${receipt.gasUsed.div(vaults.length)}`)
+        })
+
         it("should revert for unsupported commands", async () => {
             const { sniper, owner } = await loadFixture(deploySniperFixture);
             const unsupportedCommand = "0x99"; // Unsupported command

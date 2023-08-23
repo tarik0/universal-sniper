@@ -15,8 +15,6 @@ import { IWETH9 } from "../interfaces/IWETH9.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { V3Path } from "../libraries/V3Path.sol";
 
-import "hardhat/console.sol";
-
 /// @dev Decodes and executes commands.
 abstract contract Dispatcher {
     using SafeERC20 for IERC20;
@@ -45,7 +43,9 @@ abstract contract Dispatcher {
             _sellV2(inputs);
         } else if (command == Commands.BUY_V3) {
             _buyV3(inputs);
-        } else {
+        } else if (command == Commands.SELL_V3) {
+            _sellV3(inputs);
+        }else {
             // Invalid command.
             revert InvalidCommand(command);
         }
@@ -230,7 +230,7 @@ abstract contract Dispatcher {
             limitedIn = V3Router.limitOutput(amountInEach, maxAmountsOut, quoter, pools);
 
             // Swap with the pools
-            V3Router.v3Swap(limitedIn, vaults[i], pools, path);
+            V3Router.v3Swap(limitedIn, vaults[i], address(this), pools, path);
             dust -= limitedIn;
         }
 
@@ -240,6 +240,38 @@ abstract contract Dispatcher {
             IWETH9(path[0]).withdraw(dust);
             payable(msg.sender).transfer(dust);
         }
+    }
+
+    /// @dev Sells tokens with V3 pools.
+    function _sellV3(bytes calldata inputs) internal  {
+        uint256 sellPercentage;
+        address quoter;
+        address factory;
+        assembly {
+            sellPercentage := calldataload(inputs.offset)
+            quoter := calldataload(add(inputs.offset, 0x20))
+            factory := calldataload(add(inputs.offset, 0x40))
+        }
+        address[] calldata vaults = inputs.toAddressArray(3);
+        address[] calldata path = inputs.toAddressArray(4);
+        bytes calldata initCode = inputs.toBytes(5);
+
+        // Iterate over vaults.
+        uint256 limitedIn;
+        V3Router.V3Pool[] memory pools = V3Router.findPoolsBulk(factory, path, initCode);
+        for (uint256 i = 0; i < vaults.length; i++) {
+            // Calculate balances.
+            limitedIn = IERC20(path[0]).balanceOf(vaults[i]) * sellPercentage / 100;
+
+            // Swap with the pools
+            V3Router.v3Swap(limitedIn, address(this), vaults[i], pools, path);
+        }
+
+        // Return amounts out.
+        address weth = path[path.length-1];
+        uint256 dust = IERC20(weth).balanceOf(address(this));
+        IWETH9(weth).withdraw(dust);
+        payable(msg.sender).transfer(dust);
     }
 
     ///

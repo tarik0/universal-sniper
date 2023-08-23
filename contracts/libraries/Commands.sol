@@ -19,6 +19,9 @@ library Commands {
 
     // The command to buy with V3 pairs.
     bytes1 internal constant BUY_V3 = 0x05;
+
+    // The command to sell with V3 pairs.
+    bytes1 internal constant SELL_V3 = 0x06;
 }
 
 library ViewCommands {

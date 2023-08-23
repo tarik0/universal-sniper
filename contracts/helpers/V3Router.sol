@@ -31,7 +31,7 @@ library V3Router {
     }
 
     /// @dev Generates Uniswap V3 path from pools.
-    function generatePath(V3Pool[] memory pools) internal pure returns (bytes memory path) {
+    function generateBuyPath(V3Pool[] memory pools) internal pure returns (bytes memory path) {
         path = abi.encodePacked(bytes20(pools[0].tokenA));
         for (uint i = 0; i < pools.length; i++) {
             path = bytes.concat(
@@ -43,7 +43,7 @@ library V3Router {
     }
 
     /// @dev Generates reverse Uniswap V3 path from pools.
-    function generateReversePath(V3Pool[] memory pools) internal pure returns (bytes memory path) {
+    function generateSellPath(V3Pool[] memory pools) internal pure returns (bytes memory path) {
         // Starting from the last pool's tokenB.
         path = abi.encodePacked(bytes20(pools[pools.length - 1].tokenB));
         for (uint i = pools.length; i > 0; i--) {
@@ -75,7 +75,7 @@ library V3Router {
         if (maxAmountOut == 0) return amountIn;
 
         // get amounts in for max amounts.
-        uint256 maxInput = IQuoter(quoter).quoteExactOutput(generateReversePath(pools), maxAmountOut);
+        uint256 maxInput = IQuoter(quoter).quoteExactOutput(generateSellPath(pools), maxAmountOut);
         normalizedIn = maxInput > amountIn ? amountIn : maxInput - 1;
     }
 
@@ -164,6 +164,7 @@ library V3Router {
     function v3Swap(
         uint256 amountIn,
         address recipient,
+        address firstPayer,
         V3Pool[] memory pools,
         address[] memory path
     ) internal {
@@ -177,7 +178,7 @@ library V3Router {
                 amount,
                 pools[i],
                 i < size - 1 ?  address(this) : recipient,
-                address(this)
+                i == 0 ? firstPayer : address(this)
             );
         }
     }
