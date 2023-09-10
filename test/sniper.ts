@@ -106,8 +106,7 @@ describe("UniversalSniper", function () {
 
     /// Buys V3 tokens.
     async function buyV3(sniper: UniversalSniper, amount: BigNumber, maxAmount: BigNumber, vaultCount: number) {
-        // Quoter and factory.
-        const quoter = ethers.utils.getAddress("0xb27308f9f90d607463bb33ea1bebb41c27ce5ab6");
+        // Factory.
         const factory = ethers.utils.getAddress("0x1f98431c8ad98523631ae4a59f267346ea31f984");
         const initCode = "0xe34f199b19b2b4f47f68442619d555527d244f78a3297ea89325f843f87b8b54";
 
@@ -130,13 +129,13 @@ describe("UniversalSniper", function () {
         // Execute BUY_V3.
         const command = "0x05"; // BUY_V3 command
         const inputs = ethers.utils.defaultAbiCoder.encode(
-            ["uint256", "uint256", "address", "address", "address[]", "address[]", "bytes"],
-            [amount, maxAmount, quoter, factory, vaults, path, initCode]
+            ["uint256", "uint256", "address", "address[]", "address[]", "bytes"],
+            [amount, maxAmount, factory, vaults, path, initCode]
         );
 
         // Execute the command.
         const tx = await sniper.execute([command], [inputs], { value: amount });
-        return { vaults, receipt: await tx.wait(1), path, factory, initCode, quoter };
+        return { vaults, receipt: await tx.wait(1), path, factory, initCode };
     }
 
     /// The deployment tests.
@@ -147,6 +146,90 @@ describe("UniversalSniper", function () {
             await expect(await sniper.version()).to.equal(6);
         });
     });
+
+    /// The view commands.
+    describe("View Commands", () => {
+        it("should compute the vault addresses", async () => {
+            const { sniper, owner } = await loadFixture(deploySniperFixture);
+            const command = "0x00"; // COMPUTE_VAULT_ADDRESS
+            const inputs = ethers.utils.defaultAbiCoder.encode(
+                ["address", "uint256"],
+                [ethers.constants.AddressZero, 0]
+            );
+
+            const addr = await computeVaultAddress(sniper, ethers.constants.AddressZero, 0);
+            const response = await sniper.connect(owner).readView([command], [inputs]);
+            const parsed = ethers.utils.defaultAbiCoder.decode(["address"], ethers.utils.arrayify(response[0]));
+            await expect(parsed[0]).to.eq(addr);
+        })
+
+        it("should compute V2 swap price", async () => {
+            // The factories.
+            const factories = [
+                "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f", // Uniswap V2
+                "0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac", // Sushiswap
+            ]
+
+            // The pool init codes.
+            const initCodes = [
+                "0x96e8ac4277198ff8b6f785478aa9a39f403cb768dd02cbee326c3e7da348845f",
+                "0xe18a34eb0e04b04f7a0ac29a6e80748dca96319b42c54d679cb821dca90c6303"
+            ]
+
+            // The path.
+            const path = [
+                DAI_ADDR,
+                USDT_ADDR,
+                WETH_ADDR
+            ]
+
+            // Encode & call.
+            const { sniper, owner } = await loadFixture(deploySniperFixture);
+            const command = "0x01"; // ASSET_V2_PRICE
+            const inputs = ethers.utils.defaultAbiCoder.encode(
+                ["address[]", "address[]", "bytes[]"],
+                [path, factories, initCodes]
+            );
+
+            const response = await sniper.connect(owner).readView([command], [inputs]);
+            const parsed = ethers.utils.defaultAbiCoder.decode(["uint256", "uint256"], ethers.utils.arrayify(response[0]));
+            await expect(parsed[0].toString()).to.not.eq("0");
+        })
+
+        it("should compute V3 swap price", async () => {
+            // Factory.
+            const factory = ethers.utils.getAddress("0x1f98431c8ad98523631ae4a59f267346ea31f984");
+            const initCode = "0xe34f199b19b2b4f47f68442619d555527d244f78a3297ea89325f843f87b8b54";
+
+            // The path.
+            const path = [
+                WETH_ADDR,
+                USDT_ADDR,
+                DAI_ADDR
+            ]
+
+            // Encode & call.
+            const { sniper, owner } = await loadFixture(deploySniperFixture);
+            const command = "0x02"; // ASSET_V2_PRICE
+            const inputs = ethers.utils.defaultAbiCoder.encode(
+                ["address", "address[]", "bytes"],
+                [factory, path, initCode]
+            );
+
+            const response = await sniper.connect(owner).readView([command], [inputs]);
+            const parsed = ethers.utils.defaultAbiCoder.decode(["uint256", "uint256"], ethers.utils.arrayify(response[0]));
+            await expect(parsed[0].toString()).to.not.eq("0");
+        })
+
+        it("should return zero for unsupported commands", async () => {
+            const { sniper, owner } = await loadFixture(deploySniperFixture);
+            const unsupportedCommand = "0x99"; // Unsupported command
+            const inputs = ethers.utils.defaultAbiCoder.encode(["address"], [ethers.constants.AddressZero]);
+
+            const response = await sniper.connect(owner).readView([unsupportedCommand], [inputs]);
+            await expect(response[0]).to.eq("0x0000000000000000000000000000000000000000");
+        })
+    })
 
     /// The command tests.
     describe("Commands", () => {
@@ -330,7 +413,7 @@ describe("UniversalSniper", function () {
             const amountIn = ethers.utils.parseEther("1");
 
             // Execute BUY_V2.
-            const {vaults, path, factory, initCode, quoter}
+            const {vaults, path, factory, initCode}
                 = await buyV3(sniper, amountIn, maxAmountsOut, 3)
 
             // Reverse path.
@@ -340,8 +423,8 @@ describe("UniversalSniper", function () {
             // Execute SELL_V3.
             const command = "0x06"; // SELL_V3 command
             const inputs = ethers.utils.defaultAbiCoder.encode(
-                ["uint256", "address", "address", "address[]", "address[]", "bytes"],
-                [sellPercentage, quoter, factory, vaults, sellPath, initCode]
+                ["uint256", "address", "address[]", "address[]", "bytes"],
+                [sellPercentage, factory, vaults, sellPath, initCode]
             );
 
             // Before balance.
@@ -377,65 +460,6 @@ describe("UniversalSniper", function () {
 
             await expect(sniper.connect(owner).execute([unsupportedCommand], [inputs]))
                 .to.be.reverted;
-        })
-    })
-
-    /// The view commands.
-    describe("View Commands", () => {
-        it("should compute the vault addresses", async () => {
-            const { sniper, owner } = await loadFixture(deploySniperFixture);
-            const command = "0x00"; // COMPUTE_VAULT_ADDRESS
-            const inputs = ethers.utils.defaultAbiCoder.encode(
-                ["address", "uint256"],
-                [ethers.constants.AddressZero, 0]
-            );
-
-            const addr = await computeVaultAddress(sniper, ethers.constants.AddressZero, 0);
-            const response = await sniper.connect(owner).readView([command], [inputs]);
-            const parsed = ethers.utils.defaultAbiCoder.decode(["address"], ethers.utils.arrayify(response[0]));
-            await expect(parsed[0]).to.eq(addr);
-        })
-
-        it("should compute V2 swap price", async () => {
-            // The factories.
-            const factories = [
-                "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f", // Uniswap V2
-                "0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac", // Sushiswap
-            ]
-
-            // The pool init codes.
-            const initCodes = [
-                "0x96e8ac4277198ff8b6f785478aa9a39f403cb768dd02cbee326c3e7da348845f",
-                "0xe18a34eb0e04b04f7a0ac29a6e80748dca96319b42c54d679cb821dca90c6303"
-            ]
-
-            // The path.
-            const path = [
-                DAI_ADDR,
-                USDT_ADDR,
-                WETH_ADDR
-            ]
-
-            // Encode & call.
-            const { sniper, owner } = await loadFixture(deploySniperFixture);
-            const command = "0x01"; // ASSET_V2_PRICE
-            const inputs = ethers.utils.defaultAbiCoder.encode(
-                ["address[]", "address[]", "bytes[]"],
-                [path, factories, initCodes]
-            );
-
-            const response = await sniper.connect(owner).readView([command], [inputs]);
-            const parsed = ethers.utils.defaultAbiCoder.decode(["uint256", "uint256"], ethers.utils.arrayify(response[0]));
-            await expect(parsed[0].toString()).to.not.eq("0");
-        })
-
-        it("should return zero for unsupported commands", async () => {
-            const { sniper, owner } = await loadFixture(deploySniperFixture);
-            const unsupportedCommand = "0x99"; // Unsupported command
-            const inputs = ethers.utils.defaultAbiCoder.encode(["address"], [ethers.constants.AddressZero]);
-
-            const response = await sniper.connect(owner).readView([unsupportedCommand], [inputs]);
-            await expect(response[0]).to.eq("0x0000000000000000000000000000000000000000");
         })
     })
 });

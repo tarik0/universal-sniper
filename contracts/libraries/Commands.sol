@@ -30,4 +30,7 @@ library ViewCommands {
 
     // The command to calculate V2 pair price.
     bytes1 internal constant ASSET_V2_PRICE = 0x01;
+
+    // The command to calculate V3 pair price.
+    bytes1 internal constant ASSET_V3_PRICE = 0x02;
 }

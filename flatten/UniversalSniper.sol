@@ -7,9 +7,10 @@
 // Version: 0.8.17
 // Optimizer Runs: 1000000
 
+// Sources flattened with hardhat v2.17.0 https://hardhat.org
+
 // File @openzeppelin/contracts/token/ERC20/IERC20.sol@v4.7.0
 
-// Another-License-Identifier: MIT
 // OpenZeppelin Contracts (last updated v4.6.0) (token/ERC20/IERC20.sol)
 
 pragma solidity ^0.8.0;
@@ -95,7 +96,6 @@ interface IERC20 {
 
 // File @openzeppelin/contracts/interfaces/IERC20.sol@v4.7.0
 
-// Another-License-Identifier: MIT
 // OpenZeppelin Contracts v4.4.1 (interfaces/IERC20.sol)
 
 pragma solidity ^0.8.0;
@@ -103,7 +103,6 @@ pragma solidity ^0.8.0;
 
 // File @openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol@v4.7.0
 
-// Another-License-Identifier: MIT
 // OpenZeppelin Contracts v4.4.1 (token/ERC20/extensions/IERC20Metadata.sol)
 
 pragma solidity ^0.8.0;
@@ -133,7 +132,6 @@ interface IERC20Metadata is IERC20 {
 
 // File @openzeppelin/contracts/utils/Context.sol@v4.7.0
 
-// Another-License-Identifier: MIT
 // OpenZeppelin Contracts v4.4.1 (utils/Context.sol)
 
 pragma solidity ^0.8.0;
@@ -161,7 +159,6 @@ abstract contract Context {
 
 // File @openzeppelin/contracts/token/ERC20/ERC20.sol@v4.7.0
 
-// Another-License-Identifier: MIT
 // OpenZeppelin Contracts (last updated v4.7.0) (token/ERC20/ERC20.sol)
 
 pragma solidity ^0.8.0;
@@ -546,7 +543,6 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
 
 // File @openzeppelin/contracts/token/ERC20/extensions/draft-IERC20Permit.sol@v4.7.0
 
-// Another-License-Identifier: MIT
 // OpenZeppelin Contracts v4.4.1 (token/ERC20/extensions/draft-IERC20Permit.sol)
 
 pragma solidity ^0.8.0;
@@ -610,7 +606,6 @@ interface IERC20Permit {
 
 // File @openzeppelin/contracts/utils/Address.sol@v4.7.0
 
-// Another-License-Identifier: MIT
 // OpenZeppelin Contracts (last updated v4.7.0) (utils/Address.sol)
 
 pragma solidity ^0.8.1;
@@ -836,7 +831,6 @@ library Address {
 
 // File @openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol@v4.7.0
 
-// Another-License-Identifier: MIT
 // OpenZeppelin Contracts (last updated v4.7.0) (token/ERC20/utils/SafeERC20.sol)
 
 pragma solidity ^0.8.0;
@@ -954,7 +948,6 @@ library SafeERC20 {
 
 // File @uniswap/v3-core/contracts/interfaces/pool/IUniswapV3PoolActions.sol@v1.0.0
 
-// Another-License-Identifier: GPL-2.0-or-later
 pragma solidity >=0.5.0;
 
 /// @title Permissionless pool actions
@@ -1061,7 +1054,6 @@ interface IUniswapV3PoolActions {
 
 // File @uniswap/v3-core/contracts/interfaces/pool/IUniswapV3PoolDerivedState.sol@v1.0.0
 
-// Another-License-Identifier: GPL-2.0-or-later
 pragma solidity >=0.5.0;
 
 /// @title Pool state that is not stored
@@ -1079,9 +1071,9 @@ interface IUniswapV3PoolDerivedState {
     /// @return secondsPerLiquidityCumulativeX128s Cumulative seconds per liquidity-in-range value as of each `secondsAgos` from the current block
     /// timestamp
     function observe(uint32[] calldata secondsAgos)
-        external
-        view
-        returns (int56[] memory tickCumulatives, uint160[] memory secondsPerLiquidityCumulativeX128s);
+    external
+    view
+    returns (int56[] memory tickCumulatives, uint160[] memory secondsPerLiquidityCumulativeX128s);
 
     /// @notice Returns a snapshot of the tick cumulative, seconds per liquidity and seconds inside a tick range
     /// @dev Snapshots must only be compared to other snapshots, taken over a period for which a position existed.
@@ -1093,19 +1085,18 @@ interface IUniswapV3PoolDerivedState {
     /// @return secondsPerLiquidityInsideX128 The snapshot of seconds per liquidity for the range
     /// @return secondsInside The snapshot of seconds per liquidity for the range
     function snapshotCumulativesInside(int24 tickLower, int24 tickUpper)
-        external
-        view
-        returns (
-            int56 tickCumulativeInside,
-            uint160 secondsPerLiquidityInsideX128,
-            uint32 secondsInside
-        );
+    external
+    view
+    returns (
+        int56 tickCumulativeInside,
+        uint160 secondsPerLiquidityInsideX128,
+        uint32 secondsInside
+    );
 }
 
 
 // File @uniswap/v3-core/contracts/interfaces/pool/IUniswapV3PoolEvents.sol@v1.0.0
 
-// Another-License-Identifier: GPL-2.0-or-later
 pragma solidity >=0.5.0;
 
 /// @title Events emitted by a pool
@@ -1230,7 +1221,6 @@ interface IUniswapV3PoolEvents {
 
 // File @uniswap/v3-core/contracts/interfaces/pool/IUniswapV3PoolImmutables.sol@v1.0.0
 
-// Another-License-Identifier: GPL-2.0-or-later
 pragma solidity >=0.5.0;
 
 /// @title Pool state that never changes
@@ -1269,7 +1259,6 @@ interface IUniswapV3PoolImmutables {
 
 // File @uniswap/v3-core/contracts/interfaces/pool/IUniswapV3PoolOwnerActions.sol@v1.0.0
 
-// Another-License-Identifier: GPL-2.0-or-later
 pragma solidity >=0.5.0;
 
 /// @title Permissioned pool actions
@@ -1296,7 +1285,6 @@ interface IUniswapV3PoolOwnerActions {
 
 // File @uniswap/v3-core/contracts/interfaces/pool/IUniswapV3PoolState.sol@v1.0.0
 
-// Another-License-Identifier: GPL-2.0-or-later
 pragma solidity >=0.5.0;
 
 /// @title Pool state that can change
@@ -1317,17 +1305,17 @@ interface IUniswapV3PoolState {
     /// is the lower 4 bits. Used as the denominator of a fraction of the swap fee, e.g. 4 means 1/4th of the swap fee.
     /// unlocked Whether the pool is currently locked to reentrancy
     function slot0()
-        external
-        view
-        returns (
-            uint160 sqrtPriceX96,
-            int24 tick,
-            uint16 observationIndex,
-            uint16 observationCardinality,
-            uint16 observationCardinalityNext,
-            uint8 feeProtocol,
-            bool unlocked
-        );
+    external
+    view
+    returns (
+        uint160 sqrtPriceX96,
+        int24 tick,
+        uint16 observationIndex,
+        uint16 observationCardinality,
+        uint16 observationCardinalityNext,
+        uint8 feeProtocol,
+        bool unlocked
+    );
 
     /// @notice The fee growth as a Q128.128 fees of token0 collected per unit of liquidity for the entire life of the pool
     /// @dev This value can overflow the uint256
@@ -1360,18 +1348,18 @@ interface IUniswapV3PoolState {
     /// In addition, these values are only relative and must be used only in comparison to previous snapshots for
     /// a specific position.
     function ticks(int24 tick)
-        external
-        view
-        returns (
-            uint128 liquidityGross,
-            int128 liquidityNet,
-            uint256 feeGrowthOutside0X128,
-            uint256 feeGrowthOutside1X128,
-            int56 tickCumulativeOutside,
-            uint160 secondsPerLiquidityOutsideX128,
-            uint32 secondsOutside,
-            bool initialized
-        );
+    external
+    view
+    returns (
+        uint128 liquidityGross,
+        int128 liquidityNet,
+        uint256 feeGrowthOutside0X128,
+        uint256 feeGrowthOutside1X128,
+        int56 tickCumulativeOutside,
+        uint160 secondsPerLiquidityOutsideX128,
+        uint32 secondsOutside,
+        bool initialized
+    );
 
     /// @notice Returns 256 packed tick initialized boolean values. See TickBitmap for more information
     function tickBitmap(int16 wordPosition) external view returns (uint256);
@@ -1384,15 +1372,15 @@ interface IUniswapV3PoolState {
     /// Returns tokensOwed0 the computed amount of token0 owed to the position as of the last mint/burn/poke,
     /// Returns tokensOwed1 the computed amount of token1 owed to the position as of the last mint/burn/poke
     function positions(bytes32 key)
-        external
-        view
-        returns (
-            uint128 _liquidity,
-            uint256 feeGrowthInside0LastX128,
-            uint256 feeGrowthInside1LastX128,
-            uint128 tokensOwed0,
-            uint128 tokensOwed1
-        );
+    external
+    view
+    returns (
+        uint128 _liquidity,
+        uint256 feeGrowthInside0LastX128,
+        uint256 feeGrowthInside1LastX128,
+        uint128 tokensOwed0,
+        uint128 tokensOwed1
+    );
 
     /// @notice Returns data about a specific observation index
     /// @param index The element of the observations array to fetch
@@ -1403,20 +1391,19 @@ interface IUniswapV3PoolState {
     /// Returns secondsPerLiquidityCumulativeX128 the seconds per in range liquidity for the life of the pool as of the observation timestamp,
     /// Returns initialized whether the observation has been initialized and the values are safe to use
     function observations(uint256 index)
-        external
-        view
-        returns (
-            uint32 blockTimestamp,
-            int56 tickCumulative,
-            uint160 secondsPerLiquidityCumulativeX128,
-            bool initialized
-        );
+    external
+    view
+    returns (
+        uint32 blockTimestamp,
+        int56 tickCumulative,
+        uint160 secondsPerLiquidityCumulativeX128,
+        bool initialized
+    );
 }
 
 
 // File @uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol@v1.0.0
 
-// Another-License-Identifier: GPL-2.0-or-later
 pragma solidity >=0.5.0;
 
 
@@ -1429,12 +1416,12 @@ pragma solidity >=0.5.0;
 /// to the ERC20 specification
 /// @dev The pool interface is broken up into many smaller pieces
 interface IUniswapV3Pool is
-    IUniswapV3PoolImmutables,
-    IUniswapV3PoolState,
-    IUniswapV3PoolDerivedState,
-    IUniswapV3PoolActions,
-    IUniswapV3PoolOwnerActions,
-    IUniswapV3PoolEvents
+IUniswapV3PoolImmutables,
+IUniswapV3PoolState,
+IUniswapV3PoolDerivedState,
+IUniswapV3PoolActions,
+IUniswapV3PoolOwnerActions,
+IUniswapV3PoolEvents
 {
 
 }
@@ -1442,7 +1429,6 @@ interface IUniswapV3Pool is
 
 // File @openzeppelin/contracts/utils/math/SafeCast.sol@v4.7.0
 
-// Another-License-Identifier: MIT
 // OpenZeppelin Contracts (last updated v4.7.0) (utils/math/SafeCast.sol)
 
 pragma solidity ^0.8.0;
@@ -2637,7 +2623,6 @@ interface IUniswapV2Pair {
 
 // File contracts/libraries/UniswapV2Library.sol
 
-// Another-License-Identifier: GPL-3.0-or-later
 pragma solidity >=0.8.0;
 
 /// @title Uniswap v2 Helper Library
@@ -2790,7 +2775,6 @@ library UniswapV2Library {
 
 // File contracts/helpers/V2Router.sol
 
-// Another-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.17;
 
 
@@ -2959,7 +2943,6 @@ library V2Router {
 
 // File @uniswap/v3-periphery/contracts/interfaces/IQuoter.sol@v1.4.3
 
-// Another-License-Identifier: GPL-2.0-or-later
 pragma solidity >=0.7.5;
 pragma abicoder v2;
 
@@ -3012,9 +2995,356 @@ interface IQuoter {
 }
 
 
+// File contracts/libraries/FullMath.sol
+
+pragma solidity ^0.8.0;
+
+/// @title Contains 512-bit math functions
+/// @notice Facilitates multiplication and division that can have overflow of an intermediate value without any loss of precision
+/// @dev Handles "phantom overflow" i.e., allows multiplication and division where an intermediate value overflows 256 bits
+library FullMath {
+    /// @notice Calculates floor(a×b÷denominator) with full precision. Throws if result overflows a uint256 or denominator == 0
+    /// @param a The multiplicand
+    /// @param b The multiplier
+    /// @param denominator The divisor
+    /// @return result The 256-bit result
+    /// @dev Credit to Remco Bloemen under MIT license https://xn--2-umb.com/21/muldiv
+    function mulDiv(
+        uint256 a,
+        uint256 b,
+        uint256 denominator
+    ) internal pure returns (uint256 result) {
+        unchecked {
+        // 512-bit multiply [prod1 prod0] = a * b
+        // Compute the product mod 2**256 and mod 2**256 - 1
+        // then use the Chinese Remainder Theorem to reconstruct
+        // the 512 bit result. The result is stored in two 256
+        // variables such that product = prod1 * 2**256 + prod0
+            uint256 prod0; // Least significant 256 bits of the product
+            uint256 prod1; // Most significant 256 bits of the product
+            assembly {
+                let mm := mulmod(a, b, not(0))
+                prod0 := mul(a, b)
+                prod1 := sub(sub(mm, prod0), lt(mm, prod0))
+            }
+
+        // Handle non-overflow cases, 256 by 256 division
+            if (prod1 == 0) {
+                require(denominator > 0);
+                assembly {
+                    result := div(prod0, denominator)
+                }
+                return result;
+            }
+
+        // Make sure the result is less than 2**256.
+        // Also prevents denominator == 0
+            require(denominator > prod1);
+
+        ///////////////////////////////////////////////
+        // 512 by 256 division.
+        ///////////////////////////////////////////////
+
+        // Make division exact by subtracting the remainder from [prod1 prod0]
+        // Compute remainder using mulmod
+            uint256 remainder;
+            assembly {
+                remainder := mulmod(a, b, denominator)
+            }
+        // Subtract 256 bit number from 512 bit number
+            assembly {
+                prod1 := sub(prod1, gt(remainder, prod0))
+                prod0 := sub(prod0, remainder)
+            }
+
+        // Factor powers of two out of denominator
+        // Compute largest power of two divisor of denominator.
+        // Always >= 1.
+            uint256 twos = (0 - denominator) & denominator;
+        // Divide denominator by power of two
+            assembly {
+                denominator := div(denominator, twos)
+            }
+
+        // Divide [prod1 prod0] by the factors of two
+            assembly {
+                prod0 := div(prod0, twos)
+            }
+        // Shift in bits from prod1 into prod0. For this we need
+        // to flip `twos` such that it is 2**256 / twos.
+        // If twos is zero, then it becomes one
+            assembly {
+                twos := add(div(sub(0, twos), twos), 1)
+            }
+            prod0 |= prod1 * twos;
+
+        // Invert denominator mod 2**256
+        // Now that denominator is an odd number, it has an inverse
+        // modulo 2**256 such that denominator * inv = 1 mod 2**256.
+        // Compute the inverse by starting with a seed that is correct
+        // correct for four bits. That is, denominator * inv = 1 mod 2**4
+            uint256 inv = (3 * denominator) ^ 2;
+        // Now use Newton-Raphson iteration to improve the precision.
+        // Thanks to Hensel's lifting lemma, this also works in modular
+        // arithmetic, doubling the correct bits in each step.
+            inv *= 2 - denominator * inv; // inverse mod 2**8
+            inv *= 2 - denominator * inv; // inverse mod 2**16
+            inv *= 2 - denominator * inv; // inverse mod 2**32
+            inv *= 2 - denominator * inv; // inverse mod 2**64
+            inv *= 2 - denominator * inv; // inverse mod 2**128
+            inv *= 2 - denominator * inv; // inverse mod 2**256
+
+        // Because the division is now exact we can divide by multiplying
+        // with the modular inverse of denominator. This will give us the
+        // correct result modulo 2**256. Since the precoditions guarantee
+        // that the outcome is less than 2**256, this is the final result.
+        // We don't need to compute the high bits of the result and prod1
+        // is no longer required.
+            result = prod0 * inv;
+            return result;
+        }
+    }
+
+    /// @notice Calculates ceil(a×b÷denominator) with full precision. Throws if result overflows a uint256 or denominator == 0
+    /// @param a The multiplicand
+    /// @param b The multiplier
+    /// @param denominator The divisor
+    /// @return result The 256-bit result
+    function mulDivRoundingUp(
+        uint256 a,
+        uint256 b,
+        uint256 denominator
+    ) internal pure returns (uint256 result) {
+        unchecked {
+            result = mulDiv(a, b, denominator);
+            if (mulmod(a, b, denominator) > 0) {
+                require(result < type(uint256).max);
+                result++;
+            }
+        }
+    }
+}
+
+
+// File contracts/libraries/TickMath.sol
+
+pragma solidity ^0.8.0;
+
+/// @title Math library for computing sqrt prices from ticks and vice versa
+/// @notice Computes sqrt price for ticks of size 1.0001, i.e. sqrt(1.0001^tick) as fixed point Q64.96 numbers. Supports
+/// prices between 2**-128 and 2**128
+library TickMath {
+    error T();
+    error R();
+
+    /// @dev The minimum tick that may be passed to #getSqrtRatioAtTick computed from log base 1.0001 of 2**-128
+    int24 internal constant MIN_TICK = -887272;
+    /// @dev The maximum tick that may be passed to #getSqrtRatioAtTick computed from log base 1.0001 of 2**128
+    int24 internal constant MAX_TICK = -MIN_TICK;
+
+    /// @dev The minimum value that can be returned from #getSqrtRatioAtTick. Equivalent to getSqrtRatioAtTick(MIN_TICK)
+    uint160 internal constant MIN_SQRT_RATIO = 4295128739;
+    /// @dev The maximum value that can be returned from #getSqrtRatioAtTick. Equivalent to getSqrtRatioAtTick(MAX_TICK)
+    uint160 internal constant MAX_SQRT_RATIO = 1461446703485210103287273052203988822378723970342;
+
+    /// @notice Calculates sqrt(1.0001^tick) * 2^96
+    /// @dev Throws if |tick| > max tick
+    /// @param tick The input tick for the above formula
+    /// @return sqrtPriceX96 A Fixed point Q64.96 number representing the sqrt of the ratio of the two assets (token1/token0)
+    /// at the given tick
+    function getSqrtRatioAtTick(int24 tick) internal pure returns (uint160 sqrtPriceX96) {
+        unchecked {
+            uint256 absTick = tick < 0 ? uint256(-int256(tick)) : uint256(int256(tick));
+            if (absTick > uint256(int256(MAX_TICK))) revert T();
+
+            uint256 ratio = absTick & 0x1 != 0
+                ? 0xfffcb933bd6fad37aa2d162d1a594001
+                : 0x100000000000000000000000000000000;
+            if (absTick & 0x2 != 0) ratio = (ratio * 0xfff97272373d413259a46990580e213a) >> 128;
+            if (absTick & 0x4 != 0) ratio = (ratio * 0xfff2e50f5f656932ef12357cf3c7fdcc) >> 128;
+            if (absTick & 0x8 != 0) ratio = (ratio * 0xffe5caca7e10e4e61c3624eaa0941cd0) >> 128;
+            if (absTick & 0x10 != 0) ratio = (ratio * 0xffcb9843d60f6159c9db58835c926644) >> 128;
+            if (absTick & 0x20 != 0) ratio = (ratio * 0xff973b41fa98c081472e6896dfb254c0) >> 128;
+            if (absTick & 0x40 != 0) ratio = (ratio * 0xff2ea16466c96a3843ec78b326b52861) >> 128;
+            if (absTick & 0x80 != 0) ratio = (ratio * 0xfe5dee046a99a2a811c461f1969c3053) >> 128;
+            if (absTick & 0x100 != 0) ratio = (ratio * 0xfcbe86c7900a88aedcffc83b479aa3a4) >> 128;
+            if (absTick & 0x200 != 0) ratio = (ratio * 0xf987a7253ac413176f2b074cf7815e54) >> 128;
+            if (absTick & 0x400 != 0) ratio = (ratio * 0xf3392b0822b70005940c7a398e4b70f3) >> 128;
+            if (absTick & 0x800 != 0) ratio = (ratio * 0xe7159475a2c29b7443b29c7fa6e889d9) >> 128;
+            if (absTick & 0x1000 != 0) ratio = (ratio * 0xd097f3bdfd2022b8845ad8f792aa5825) >> 128;
+            if (absTick & 0x2000 != 0) ratio = (ratio * 0xa9f746462d870fdf8a65dc1f90e061e5) >> 128;
+            if (absTick & 0x4000 != 0) ratio = (ratio * 0x70d869a156d2a1b890bb3df62baf32f7) >> 128;
+            if (absTick & 0x8000 != 0) ratio = (ratio * 0x31be135f97d08fd981231505542fcfa6) >> 128;
+            if (absTick & 0x10000 != 0) ratio = (ratio * 0x9aa508b5b7a84e1c677de54f3e99bc9) >> 128;
+            if (absTick & 0x20000 != 0) ratio = (ratio * 0x5d6af8dedb81196699c329225ee604) >> 128;
+            if (absTick & 0x40000 != 0) ratio = (ratio * 0x2216e584f5fa1ea926041bedfe98) >> 128;
+            if (absTick & 0x80000 != 0) ratio = (ratio * 0x48a170391f7dc42444e8fa2) >> 128;
+
+            if (tick > 0) ratio = type(uint256).max / ratio;
+
+        // this divides by 1<<32 rounding up to go from a Q128.128 to a Q128.96.
+        // we then downcast because we know the result always fits within 160 bits due to our tick input constraint
+        // we round up in the division so getTickAtSqrtRatio of the output price is always consistent
+            sqrtPriceX96 = uint160((ratio >> 32) + (ratio % (1 << 32) == 0 ? 0 : 1));
+        }
+    }
+
+    /// @notice Calculates the greatest tick value such that getRatioAtTick(tick) <= ratio
+    /// @dev Throws in case sqrtPriceX96 < MIN_SQRT_RATIO, as MIN_SQRT_RATIO is the lowest value getRatioAtTick may
+    /// ever return.
+    /// @param sqrtPriceX96 The sqrt ratio for which to compute the tick as a Q64.96
+    /// @return tick The greatest tick for which the ratio is less than or equal to the input ratio
+    function getTickAtSqrtRatio(uint160 sqrtPriceX96) internal pure returns (int24 tick) {
+        unchecked {
+        // second inequality must be < because the price can never reach the price at the max tick
+            if (!(sqrtPriceX96 >= MIN_SQRT_RATIO && sqrtPriceX96 < MAX_SQRT_RATIO)) revert R();
+            uint256 ratio = uint256(sqrtPriceX96) << 32;
+
+            uint256 r = ratio;
+            uint256 msb = 0;
+
+            assembly {
+                let f := shl(7, gt(r, 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF))
+                msb := or(msb, f)
+                r := shr(f, r)
+            }
+            assembly {
+                let f := shl(6, gt(r, 0xFFFFFFFFFFFFFFFF))
+                msb := or(msb, f)
+                r := shr(f, r)
+            }
+            assembly {
+                let f := shl(5, gt(r, 0xFFFFFFFF))
+                msb := or(msb, f)
+                r := shr(f, r)
+            }
+            assembly {
+                let f := shl(4, gt(r, 0xFFFF))
+                msb := or(msb, f)
+                r := shr(f, r)
+            }
+            assembly {
+                let f := shl(3, gt(r, 0xFF))
+                msb := or(msb, f)
+                r := shr(f, r)
+            }
+            assembly {
+                let f := shl(2, gt(r, 0xF))
+                msb := or(msb, f)
+                r := shr(f, r)
+            }
+            assembly {
+                let f := shl(1, gt(r, 0x3))
+                msb := or(msb, f)
+                r := shr(f, r)
+            }
+            assembly {
+                let f := gt(r, 0x1)
+                msb := or(msb, f)
+            }
+
+            if (msb >= 128) r = ratio >> (msb - 127);
+            else r = ratio << (127 - msb);
+
+            int256 log_2 = (int256(msb) - 128) << 64;
+
+            assembly {
+                r := shr(127, mul(r, r))
+                let f := shr(128, r)
+                log_2 := or(log_2, shl(63, f))
+                r := shr(f, r)
+            }
+            assembly {
+                r := shr(127, mul(r, r))
+                let f := shr(128, r)
+                log_2 := or(log_2, shl(62, f))
+                r := shr(f, r)
+            }
+            assembly {
+                r := shr(127, mul(r, r))
+                let f := shr(128, r)
+                log_2 := or(log_2, shl(61, f))
+                r := shr(f, r)
+            }
+            assembly {
+                r := shr(127, mul(r, r))
+                let f := shr(128, r)
+                log_2 := or(log_2, shl(60, f))
+                r := shr(f, r)
+            }
+            assembly {
+                r := shr(127, mul(r, r))
+                let f := shr(128, r)
+                log_2 := or(log_2, shl(59, f))
+                r := shr(f, r)
+            }
+            assembly {
+                r := shr(127, mul(r, r))
+                let f := shr(128, r)
+                log_2 := or(log_2, shl(58, f))
+                r := shr(f, r)
+            }
+            assembly {
+                r := shr(127, mul(r, r))
+                let f := shr(128, r)
+                log_2 := or(log_2, shl(57, f))
+                r := shr(f, r)
+            }
+            assembly {
+                r := shr(127, mul(r, r))
+                let f := shr(128, r)
+                log_2 := or(log_2, shl(56, f))
+                r := shr(f, r)
+            }
+            assembly {
+                r := shr(127, mul(r, r))
+                let f := shr(128, r)
+                log_2 := or(log_2, shl(55, f))
+                r := shr(f, r)
+            }
+            assembly {
+                r := shr(127, mul(r, r))
+                let f := shr(128, r)
+                log_2 := or(log_2, shl(54, f))
+                r := shr(f, r)
+            }
+            assembly {
+                r := shr(127, mul(r, r))
+                let f := shr(128, r)
+                log_2 := or(log_2, shl(53, f))
+                r := shr(f, r)
+            }
+            assembly {
+                r := shr(127, mul(r, r))
+                let f := shr(128, r)
+                log_2 := or(log_2, shl(52, f))
+                r := shr(f, r)
+            }
+            assembly {
+                r := shr(127, mul(r, r))
+                let f := shr(128, r)
+                log_2 := or(log_2, shl(51, f))
+                r := shr(f, r)
+            }
+            assembly {
+                r := shr(127, mul(r, r))
+                let f := shr(128, r)
+                log_2 := or(log_2, shl(50, f))
+            }
+
+            int256 log_sqrt10001 = log_2 * 255738958999603826347141; // 128.128 number
+
+            int24 tickLow = int24((log_sqrt10001 - 3402992956809132418596140100660247210) >> 128);
+            int24 tickHi = int24((log_sqrt10001 + 291339464771989622907027621153398088495) >> 128);
+
+            tick = tickLow == tickHi ? tickLow : getSqrtRatioAtTick(tickHi) <= sqrtPriceX96 ? tickHi : tickLow;
+        }
+    }
+}
+
+
 // File contracts/libraries/BytesLib.sol
 
-// Another-License-Identifier: GPL-3.0-or-later
 
 /// @title Library for Bytes Manipulation
 pragma solidity ^0.8.0;
@@ -3110,7 +3440,6 @@ library BytesLib {
 
 // File contracts/libraries/V3Path.sol
 
-// Another-License-Identifier: GPL-3.0-or-later
 pragma solidity >=0.6.0;
 
 /// @title Functions for manipulating path data for multihop swaps
@@ -3154,8 +3483,11 @@ library V3Path {
 
 // File contracts/helpers/V3Router.sol
 
-// Another-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.17;
+
+
+
+
 
 
 
@@ -3177,14 +3509,14 @@ library V3Router {
     /// @dev Struct to represent V3 pool.
     struct V3Pool {
         address addr;
-        address tokenA;
+        address tokenIn;
         address tokenB;
         uint24 fee;
     }
 
     /// @dev Generates Uniswap V3 path from pools.
     function generateBuyPath(V3Pool[] memory pools) internal pure returns (bytes memory path) {
-        path = abi.encodePacked(bytes20(pools[0].tokenA));
+        path = abi.encodePacked(bytes20(pools[0].tokenIn));
         for (uint i = 0; i < pools.length; i++) {
             path = bytes.concat(
                 path,
@@ -3203,7 +3535,7 @@ library V3Router {
             path = bytes.concat(
                 path,
                 bytes3(pools[i-1].fee),
-                bytes20(pools[i-1].tokenA)
+                bytes20(pools[i-1].tokenIn)
             );
         }
     }
@@ -3217,25 +3549,76 @@ library V3Router {
         return (size > 0);
     }
 
+    /// @dev Calculates amount in with pool.
+    function getAmountIn(
+        address tokenIn,
+        address tokenOut,
+        uint256 amountOut,
+        V3Pool memory pool
+    ) internal view returns (uint256 amountIn) {
+        require(tokenIn != tokenOut, "Input and output tokens cannot be the same");
+
+        // Get the latest tick from the pool.
+        (, int24 tick, , , , , ) = IUniswapV3Pool(pool.addr).slot0();
+
+        // Calculate the square root price ratio from the tick.
+        uint160 sqrtRatioX96 = TickMath.getSqrtRatioAtTick(tick);
+
+        // Calculate the required input amount based on the square root price ratio.
+        // This logic is adapted from Uniswap's OracleLibrary.
+        if (sqrtRatioX96 <= type(uint128).max) {
+            uint256 ratioX192 = uint256(sqrtRatioX96) * sqrtRatioX96;
+            amountIn = tokenIn > tokenOut
+                ? FullMath.mulDiv(ratioX192, amountOut, 1 << 192)
+                : FullMath.mulDiv(1 << 192, amountOut, ratioX192);
+        } else {
+            uint256 ratioX128 = FullMath.mulDiv(sqrtRatioX96, sqrtRatioX96, 1 << 64);
+            amountIn = tokenIn > tokenOut
+                ? FullMath.mulDiv(ratioX128, amountOut, 1 << 128)
+                : FullMath.mulDiv(1 << 128, amountOut, ratioX128);
+        }
+
+        return amountIn;
+    }
+
+    /// @dev Calculates amount in with multihop.
+    function getAmountInMultihop(
+        uint256 amountOut,
+        address[] calldata path,
+        V3Pool[] memory pools
+    ) internal view returns (uint256 amountIn) {
+        require(path.length == pools.length + 1, "Path and pools lengths mismatch");
+
+        amountIn = amountOut;
+        for (uint256 i = path.length - 1; i > 0; i--) {
+            V3Pool memory pool = pools[i - 1];
+
+            // Calculate the required input amount for the current swap.
+            amountIn = getAmountIn(path[i-1], path[i], amountIn, pool);
+        }
+
+        return amountIn;
+    }
+
     /// @dev Limits the output amount of tokens.
     function limitOutput(
         uint256 amountIn,
         uint256 maxAmountOut,
-        address quoter,
+        address[] calldata path,
         V3Pool[] memory pools
-    ) internal returns (uint256 normalizedIn) {
+    ) internal view returns (uint256 normalizedIn) {
         if (maxAmountOut == 0) return amountIn;
 
         // get amounts in for max amounts.
-        uint256 maxInput = IQuoter(quoter).quoteExactOutput(generateSellPath(pools), maxAmountOut);
+        uint256 maxInput = getAmountInMultihop(maxAmountOut, path, pools);
         normalizedIn = maxInput > amountIn ? amountIn : maxInput - 1;
     }
 
     /// @dev Finds the V3 pool with most liquidity.
     function findPools(
         address factory,
-        address tokenA,
-        address tokenB,
+        address tokenIn,
+        address tokenOut,
         bytes calldata initCode
     ) internal view returns (V3Pool memory pair){
         // Cached variables.
@@ -3248,7 +3631,7 @@ library V3Router {
 
         // Loop through the fees
         for (uint i = 0; i < fees.length; i++) {
-            address currentPool = computePoolAddress(factory, tokenA, tokenB, fees[i], initCode);
+            address currentPool = computePoolAddress(factory, tokenIn, tokenOut, fees[i], initCode);
             uint currentLiquidity = isContract(currentPool) ? IUniswapV3Pool(currentPool).liquidity() : 0;
 
             // If the current liquidity is higher than maxLiquidity, update maxLiquidity, fee, and pool
@@ -3261,10 +3644,10 @@ library V3Router {
 
         // If maxLiquidity is still 0, no pool found
         if (maxLiquidity == 0) {
-            revert PoolNotFound(tokenA, tokenB);
+            revert PoolNotFound(tokenIn, tokenOut);
         }
 
-        return V3Pool(pool, tokenA, tokenB, fee);
+        return V3Pool(pool, tokenIn, tokenOut, fee);
     }
 
     // @dev Finds the V3 pools from path.
@@ -3273,11 +3656,15 @@ library V3Router {
         address[] calldata path,
         bytes calldata initCode
     ) internal view returns (V3Pool[] memory pairs)  {
+        // cached variables
+        address tokenIn;
+        address tokenOut;
+
         pairs = new V3Pool[](path.length-1);
         for (uint i = 0; i < pairs.length; i++) {
-            address tokenA = path[i];
-            address tokenB = path[i+1];
-            pairs[i] = findPools(factory, tokenA, tokenB, initCode);
+            tokenIn = path[i];
+            tokenOut = path[i+1];
+            pairs[i] = findPools(factory, tokenIn, tokenOut, initCode);
         }
     }
 
@@ -3290,7 +3677,7 @@ library V3Router {
         address payer
     ) internal returns (uint256) {
         // Exact input mode.
-        bool zeroForOne = tokenIn < (pool.tokenA == tokenIn ? pool.tokenB : pool.tokenA);
+        bool zeroForOne = tokenIn < (pool.tokenIn == tokenIn ? pool.tokenB : pool.tokenIn);
 
         // Execute swap.
         (
@@ -3334,7 +3721,7 @@ library V3Router {
             );
         }
     }
-    
+
     /// @dev Computes the V3 pool address.
     function computePoolAddress(
         address factory,
@@ -3364,7 +3751,6 @@ library V3Router {
 
 // File @openzeppelin/contracts/utils/Create2.sol@v4.7.0
 
-// Another-License-Identifier: MIT
 // OpenZeppelin Contracts (last updated v4.7.0) (utils/Create2.sol)
 
 pragma solidity ^0.8.0;
@@ -3434,7 +3820,6 @@ library Create2 {
 
 // File contracts/base/Vault.sol
 
-// Another-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.17;
 
 /// @title Vault
@@ -3455,7 +3840,6 @@ contract Vault {
 
 // File contracts/helpers/Vaults.sol
 
-// Another-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.17;
 
 
@@ -3491,7 +3875,6 @@ library Vaults {
 
 // File contracts/interfaces/IWETH9.sol
 
-// Another-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.17;
 
 /// @title Interface for WETH9
@@ -3506,7 +3889,6 @@ interface IWETH9 is IERC20 {
 
 // File contracts/libraries/Commands.sol
 
-// Another-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.17;
 
 library Commands {
@@ -3538,12 +3920,14 @@ library ViewCommands {
 
     // The command to calculate V2 pair price.
     bytes1 internal constant ASSET_V2_PRICE = 0x01;
+
+    // The command to calculate V3 pair price.
+    bytes1 internal constant ASSET_V3_PRICE = 0x02;
 }
 
 
 // File contracts/base/Dispatcher.sol
 
-// Another-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.17;
 
 
@@ -3599,6 +3983,8 @@ abstract contract Dispatcher {
             return _getVaultAddr(inputs);
         } else if (command == ViewCommands.ASSET_V2_PRICE) {
             return _getAssetPriceV2(inputs);
+        } else if (command == ViewCommands.ASSET_V3_PRICE) {
+            return _getAssetPriceV3(inputs);
         }
 
         // Unknown command.
@@ -3740,17 +4126,15 @@ abstract contract Dispatcher {
     function _buyV3(bytes calldata inputs) internal {
         uint256 amountIn;
         uint256 maxAmountsOut;
-        address quoter;
         address factory;
         assembly {
             amountIn := calldataload(inputs.offset)
             maxAmountsOut := calldataload(add(inputs.offset, 0x20))
-            quoter := calldataload(add(inputs.offset, 0x40))
-            factory := calldataload(add(inputs.offset, 0x60))
+            factory := calldataload(add(inputs.offset, 0x40))
         }
-        address[] calldata vaults = inputs.toAddressArray(4);
-        address[] calldata path = inputs.toAddressArray(5);
-        bytes calldata initCode = inputs.toBytes(6);
+        address[] calldata vaults = inputs.toAddressArray(3);
+        address[] calldata path = inputs.toAddressArray(4);
+        bytes calldata initCode = inputs.toBytes(5);
 
         // Check amount.
         if (amountIn > msg.value)
@@ -3768,7 +4152,7 @@ abstract contract Dispatcher {
         V3Router.V3Pool[] memory pools = V3Router.findPoolsBulk(factory, path, initCode);
         for (uint256 i = 0; i < vaults.length; i++) {
             // Limit the output.
-            limitedIn = V3Router.limitOutput(amountInEach, maxAmountsOut, quoter, pools);
+            limitedIn = V3Router.limitOutput(amountInEach, maxAmountsOut, path, pools);
 
             // Swap with the pools
             V3Router.v3Swap(limitedIn, vaults[i], address(this), pools, path);
@@ -3786,16 +4170,14 @@ abstract contract Dispatcher {
     /// @dev Sells tokens with V3 pools.
     function _sellV3(bytes calldata inputs) internal  {
         uint256 sellPercentage;
-        address quoter;
         address factory;
         assembly {
             sellPercentage := calldataload(inputs.offset)
-            quoter := calldataload(add(inputs.offset, 0x20))
-            factory := calldataload(add(inputs.offset, 0x40))
+            factory := calldataload(add(inputs.offset, 0x20))
         }
-        address[] calldata vaults = inputs.toAddressArray(3);
-        address[] calldata path = inputs.toAddressArray(4);
-        bytes calldata initCode = inputs.toBytes(5);
+        address[] calldata vaults = inputs.toAddressArray(2);
+        address[] calldata path = inputs.toAddressArray(3);
+        bytes calldata initCode = inputs.toBytes(4);
 
         // Iterate over vaults.
         uint256 limitedIn;
@@ -3850,6 +4232,24 @@ abstract contract Dispatcher {
         return abi.encode(amountA, amountB);
     }
 
+    /// @dev Calculates asset price with V3 pairs. (A/path/B) (A per B)
+    function _getAssetPriceV3(bytes calldata inputs) internal view returns (bytes memory) {
+        address factory;
+        assembly {
+            factory := calldataload(inputs.offset)
+        }
+        address[] calldata path = inputs.toAddressArray(1);
+        bytes calldata initCode = inputs.toBytes(2);
+
+        // Find best pools.
+        V3Router.V3Pool[] memory pools = V3Router.findPoolsBulk(factory, path, initCode);
+
+        // Calculate amount in.
+        uint256 amountB = 10 ** ERC20(path[path.length-1]).decimals();
+        uint256 amountA = V3Router.getAmountInMultihop(amountB, path, pools);
+
+        return abi.encode(amountA, amountB);
+    }
 
     ///
     /// @dev Uniswap Callbacks
@@ -3879,7 +4279,7 @@ abstract contract Dispatcher {
         ) revert InvalidSwap();
 
         // Calculate amounts to pay.
-        address tokenOut = pool.tokenA == tokenIn ? pool.tokenB : pool.tokenA;
+        address tokenOut = pool.tokenIn == tokenIn ? pool.tokenB : pool.tokenIn;
         (bool isExactInput, uint256 amountToPay) =
             amount0Delta > 0 ? (tokenIn < tokenOut, uint256(amount0Delta)) : (tokenOut < tokenIn, uint256(amount1Delta));
 
@@ -3896,7 +4296,6 @@ abstract contract Dispatcher {
 
 // File contracts/UniversalSniper.sol
 
-// Another-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.17;
 
 contract UniversalSniper is Dispatcher {

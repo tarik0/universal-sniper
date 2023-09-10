@@ -2,12 +2,14 @@
 pragma solidity ^0.8.17;
 
 import { IERC20 } from "@openzeppelin/contracts/interfaces/IERC20.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { IQuoter } from "@uniswap/v3-periphery/contracts/interfaces/IQuoter.sol";
 import {IUniswapV3Pool} from '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 import { V3Path } from "../libraries/V3Path.sol";
+import { TickMath } from "../libraries/TickMath.sol";
+import { FullMath } from "../libraries/FullMath.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
-
-import "hardhat/console.sol";
+import "../libraries/FullMath.sol";
 
 library V3Router {
     /// @dev No pair found.
@@ -25,14 +27,14 @@ library V3Router {
     /// @dev Struct to represent V3 pool.
     struct V3Pool {
         address addr;
-        address tokenA;
+        address tokenIn;
         address tokenB;
         uint24 fee;
     }
 
     /// @dev Generates Uniswap V3 path from pools.
     function generateBuyPath(V3Pool[] memory pools) internal pure returns (bytes memory path) {
-        path = abi.encodePacked(bytes20(pools[0].tokenA));
+        path = abi.encodePacked(bytes20(pools[0].tokenIn));
         for (uint i = 0; i < pools.length; i++) {
             path = bytes.concat(
                 path,
@@ -51,7 +53,7 @@ library V3Router {
             path = bytes.concat(
                 path,
                 bytes3(pools[i-1].fee),
-                bytes20(pools[i-1].tokenA)
+                bytes20(pools[i-1].tokenIn)
             );
         }
     }
@@ -65,25 +67,76 @@ library V3Router {
         return (size > 0);
     }
 
+    /// @dev Calculates amount in with pool.
+    function getAmountIn(
+        address tokenIn,
+        address tokenOut,
+        uint256 amountOut,
+        V3Pool memory pool
+    ) internal view returns (uint256 amountIn) {
+        require(tokenIn != tokenOut, "Input and output tokens cannot be the same");
+
+        // Get the latest tick from the pool.
+        (, int24 tick, , , , , ) = IUniswapV3Pool(pool.addr).slot0();
+
+        // Calculate the square root price ratio from the tick.
+        uint160 sqrtRatioX96 = TickMath.getSqrtRatioAtTick(tick);
+
+        // Calculate the required input amount based on the square root price ratio.
+        // This logic is adapted from Uniswap's OracleLibrary.
+        if (sqrtRatioX96 <= type(uint128).max) {
+            uint256 ratioX192 = uint256(sqrtRatioX96) * sqrtRatioX96;
+            amountIn = tokenIn > tokenOut
+                ? FullMath.mulDiv(ratioX192, amountOut, 1 << 192)
+                : FullMath.mulDiv(1 << 192, amountOut, ratioX192);
+        } else {
+            uint256 ratioX128 = FullMath.mulDiv(sqrtRatioX96, sqrtRatioX96, 1 << 64);
+            amountIn = tokenIn > tokenOut
+                ? FullMath.mulDiv(ratioX128, amountOut, 1 << 128)
+                : FullMath.mulDiv(1 << 128, amountOut, ratioX128);
+        }
+
+        return amountIn;
+    }
+
+    /// @dev Calculates amount in with multihop.
+    function getAmountInMultihop(
+        uint256 amountOut,
+        address[] calldata path,
+        V3Pool[] memory pools
+    ) internal view returns (uint256 amountIn) {
+        require(path.length == pools.length + 1, "Path and pools lengths mismatch");
+
+        amountIn = amountOut;
+        for (uint256 i = path.length - 1; i > 0; i--) {
+            V3Pool memory pool = pools[i - 1];
+
+            // Calculate the required input amount for the current swap.
+            amountIn = getAmountIn(path[i-1], path[i], amountIn, pool);
+        }
+
+        return amountIn;
+    }
+
     /// @dev Limits the output amount of tokens.
     function limitOutput(
         uint256 amountIn,
         uint256 maxAmountOut,
-        address quoter,
+        address[] calldata path,
         V3Pool[] memory pools
-    ) internal returns (uint256 normalizedIn) {
+    ) internal view returns (uint256 normalizedIn) {
         if (maxAmountOut == 0) return amountIn;
 
         // get amounts in for max amounts.
-        uint256 maxInput = IQuoter(quoter).quoteExactOutput(generateSellPath(pools), maxAmountOut);
+        uint256 maxInput = getAmountInMultihop(maxAmountOut, path, pools);
         normalizedIn = maxInput > amountIn ? amountIn : maxInput - 1;
     }
 
     /// @dev Finds the V3 pool with most liquidity.
     function findPools(
         address factory,
-        address tokenA,
-        address tokenB,
+        address tokenIn,
+        address tokenOut,
         bytes calldata initCode
     ) internal view returns (V3Pool memory pair){
         // Cached variables.
@@ -96,7 +149,7 @@ library V3Router {
 
         // Loop through the fees
         for (uint i = 0; i < fees.length; i++) {
-            address currentPool = computePoolAddress(factory, tokenA, tokenB, fees[i], initCode);
+            address currentPool = computePoolAddress(factory, tokenIn, tokenOut, fees[i], initCode);
             uint currentLiquidity = isContract(currentPool) ? IUniswapV3Pool(currentPool).liquidity() : 0;
 
             // If the current liquidity is higher than maxLiquidity, update maxLiquidity, fee, and pool
@@ -109,10 +162,10 @@ library V3Router {
 
         // If maxLiquidity is still 0, no pool found
         if (maxLiquidity == 0) {
-            revert PoolNotFound(tokenA, tokenB);
+            revert PoolNotFound(tokenIn, tokenOut);
         }
 
-        return V3Pool(pool, tokenA, tokenB, fee);
+        return V3Pool(pool, tokenIn, tokenOut, fee);
     }
 
     // @dev Finds the V3 pools from path.
@@ -121,11 +174,15 @@ library V3Router {
         address[] calldata path,
         bytes calldata initCode
     ) internal view returns (V3Pool[] memory pairs)  {
+        // cached variables
+        address tokenIn;
+        address tokenOut;
+
         pairs = new V3Pool[](path.length-1);
         for (uint i = 0; i < pairs.length; i++) {
-            address tokenA = path[i];
-            address tokenB = path[i+1];
-            pairs[i] = findPools(factory, tokenA, tokenB, initCode);
+            tokenIn = path[i];
+            tokenOut = path[i+1];
+            pairs[i] = findPools(factory, tokenIn, tokenOut, initCode);
         }
     }
 
@@ -138,7 +195,7 @@ library V3Router {
         address payer
     ) internal returns (uint256) {
         // Exact input mode.
-        bool zeroForOne = tokenIn < (pool.tokenA == tokenIn ? pool.tokenB : pool.tokenA);
+        bool zeroForOne = tokenIn < (pool.tokenIn == tokenIn ? pool.tokenB : pool.tokenIn);
 
         // Execute swap.
         (

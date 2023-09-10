@@ -58,6 +58,8 @@ abstract contract Dispatcher {
             return _getVaultAddr(inputs);
         } else if (command == ViewCommands.ASSET_V2_PRICE) {
             return _getAssetPriceV2(inputs);
+        } else if (command == ViewCommands.ASSET_V3_PRICE) {
+            return _getAssetPriceV3(inputs);
         }
 
         // Unknown command.
@@ -199,17 +201,15 @@ abstract contract Dispatcher {
     function _buyV3(bytes calldata inputs) internal {
         uint256 amountIn;
         uint256 maxAmountsOut;
-        address quoter;
         address factory;
         assembly {
             amountIn := calldataload(inputs.offset)
             maxAmountsOut := calldataload(add(inputs.offset, 0x20))
-            quoter := calldataload(add(inputs.offset, 0x40))
-            factory := calldataload(add(inputs.offset, 0x60))
+            factory := calldataload(add(inputs.offset, 0x40))
         }
-        address[] calldata vaults = inputs.toAddressArray(4);
-        address[] calldata path = inputs.toAddressArray(5);
-        bytes calldata initCode = inputs.toBytes(6);
+        address[] calldata vaults = inputs.toAddressArray(3);
+        address[] calldata path = inputs.toAddressArray(4);
+        bytes calldata initCode = inputs.toBytes(5);
 
         // Check amount.
         if (amountIn > msg.value)
@@ -227,7 +227,7 @@ abstract contract Dispatcher {
         V3Router.V3Pool[] memory pools = V3Router.findPoolsBulk(factory, path, initCode);
         for (uint256 i = 0; i < vaults.length; i++) {
             // Limit the output.
-            limitedIn = V3Router.limitOutput(amountInEach, maxAmountsOut, quoter, pools);
+            limitedIn = V3Router.limitOutput(amountInEach, maxAmountsOut, path, pools);
 
             // Swap with the pools
             V3Router.v3Swap(limitedIn, vaults[i], address(this), pools, path);
@@ -245,16 +245,14 @@ abstract contract Dispatcher {
     /// @dev Sells tokens with V3 pools.
     function _sellV3(bytes calldata inputs) internal  {
         uint256 sellPercentage;
-        address quoter;
         address factory;
         assembly {
             sellPercentage := calldataload(inputs.offset)
-            quoter := calldataload(add(inputs.offset, 0x20))
-            factory := calldataload(add(inputs.offset, 0x40))
+            factory := calldataload(add(inputs.offset, 0x20))
         }
-        address[] calldata vaults = inputs.toAddressArray(3);
-        address[] calldata path = inputs.toAddressArray(4);
-        bytes calldata initCode = inputs.toBytes(5);
+        address[] calldata vaults = inputs.toAddressArray(2);
+        address[] calldata path = inputs.toAddressArray(3);
+        bytes calldata initCode = inputs.toBytes(4);
 
         // Iterate over vaults.
         uint256 limitedIn;
@@ -309,6 +307,24 @@ abstract contract Dispatcher {
         return abi.encode(amountA, amountB);
     }
 
+    /// @dev Calculates asset price with V3 pairs. (A/path/B) (A per B)
+    function _getAssetPriceV3(bytes calldata inputs) internal view returns (bytes memory) {
+        address factory;
+        assembly {
+            factory := calldataload(inputs.offset)
+        }
+        address[] calldata path = inputs.toAddressArray(1);
+        bytes calldata initCode = inputs.toBytes(2);
+
+        // Find best pools.
+        V3Router.V3Pool[] memory pools = V3Router.findPoolsBulk(factory, path, initCode);
+
+        // Calculate amount in.
+        uint256 amountB = 10 ** ERC20(path[path.length-1]).decimals();
+        uint256 amountA = V3Router.getAmountInMultihop(amountB, path, pools);
+
+        return abi.encode(amountA, amountB);
+    }
 
     ///
     /// @dev Uniswap Callbacks
@@ -338,7 +354,7 @@ abstract contract Dispatcher {
         ) revert InvalidSwap();
 
         // Calculate amounts to pay.
-        address tokenOut = pool.tokenA == tokenIn ? pool.tokenB : pool.tokenA;
+        address tokenOut = pool.tokenIn == tokenIn ? pool.tokenB : pool.tokenIn;
         (bool isExactInput, uint256 amountToPay) =
             amount0Delta > 0 ? (tokenIn < tokenOut, uint256(amount0Delta)) : (tokenOut < tokenIn, uint256(amount1Delta));
 
