@@ -1,6 +1,6 @@
 # Universal Sniper
 
-Switss-knife for Uniswap V2, V3 liquidity interaction strategies.
+Swiss-knife for Uniswap V2, V3 liquidity interaction strategies.
 
 ## Commands
 
